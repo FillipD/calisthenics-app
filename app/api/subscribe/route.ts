@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { assessUser } from "@/lib/assess";
+import { sendPlanEmail } from "@/lib/email";
 import { FormData } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -27,6 +28,12 @@ export async function POST(req: NextRequest) {
 
     if (!beehiivResult.success) {
       console.error("beehiiv subscription error:", beehiivResult.error);
+    }
+
+    // Send training plan email via Resend (non-blocking)
+    const emailResult = await sendPlanEmail(email, result);
+    if (!emailResult.success) {
+      console.error("Resend email error:", emailResult.error);
     }
 
     return NextResponse.json(result, { status: 200 });
