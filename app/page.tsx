@@ -33,6 +33,24 @@ export default function Page() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<AssessmentResult | null>(null);
 
+  async function handleTestSubmit() {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pullUps: 5, pushUps: 20, dips: 5, goal: "build-muscle", email: "test@test.com" }),
+      });
+      const data = await res.json();
+      if (res.ok) setResult(data);
+    } catch {
+      setError("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -65,6 +83,8 @@ export default function Page() {
   if (result) {
     return <ResultView result={result} onReset={() => setResult(null)} />;
   }
+
+  const isDev = process.env.NODE_ENV === "development";
 
   return (
     <main
@@ -342,6 +362,14 @@ export default function Page() {
             {loading ? "Building your plan…" : "Get my free plan →"}
           </button>
         </form>
+        {isDev && (
+          <button
+            onClick={handleTestSubmit}
+            style={{ marginTop: "1rem", background: "none", border: "1px dashed #444", color: "#666", padding: "0.4rem 0.8rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.75rem", fontFamily: "inherit" }}
+          >
+            [dev] skip form
+          </button>
+        )}
       </div>
     </main>
   );
