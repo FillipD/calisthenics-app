@@ -617,6 +617,9 @@ function ResultView({
             fontFamily: "inherit",
           }}
         >
+          <p style={{ color: S.muted, fontSize: "0.8rem", marginBottom: "1.5rem" }}>
+            This plan has also been sent to your email. If you don't see it, check your spam folder.
+          </p>
           ← Start over
         </button>
       </div>
