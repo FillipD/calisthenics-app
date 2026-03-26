@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assessUser } from "@/lib/assess";
 import { sendPlanEmail } from "@/lib/email";
+import { supabaseAdmin } from "@/lib/supabase";
 import { FormData } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -34,6 +35,14 @@ export async function POST(req: NextRequest) {
     const emailResult = await sendPlanEmail(email, result);
     if (!emailResult.success) {
       console.error("Resend email error:", emailResult.error);
+    }
+
+    // Upsert profile in Supabase — saves email, goal, level for later auth linking
+    const { error: dbError } = await supabaseAdmin
+      .from("profiles")
+      .upsert({ email, goal: body.goal, level: result.level }, { onConflict: "email" });
+    if (dbError) {
+      console.error("Supabase profile upsert error:", dbError.message);
     }
 
     return NextResponse.json(result, { status: 200 });
