@@ -65,6 +65,13 @@ function buildEmailHtml(result: AssessmentResult): string {
       <td align="center">
         <table width="100%" style="max-width:600px;">
 
+          <!-- Greeting -->
+          <tr>
+            <td style="padding-bottom:24px;">
+              <p style="margin:0;font-size:15px;line-height:1.6;color:${COLORS.chalk};">Hey, it's Fillip from Caliplan. Here's your personalised training plan — built for where you actually are right now. Let's get to work.</p>
+            </td>
+          </tr>
+
           <!-- Header -->
           <tr>
             <td style="padding-bottom:32px;">
