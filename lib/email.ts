@@ -30,7 +30,7 @@ export async function sendPlanEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: fromEmail,
+      from: `Caliplan <${fromEmail}>`,
       to: email,
       subject: `Your ${result.level} calisthenics plan`,
       html: buildEmailHtml(result),
