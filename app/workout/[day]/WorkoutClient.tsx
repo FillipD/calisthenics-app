@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { TrainingDay, Exercise } from "@/types";
 import { evaluateWorkout, type WorkoutEval, type EvalInput } from "@/lib/workoutEval";
+import { track } from "@/lib/analytics";
 
 const S = {
   bg:          "#0f0f0e",
@@ -109,6 +110,12 @@ export default function WorkoutClient({ day }: Props) {
     initInputs();
     setStatus("active");
     intervalRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+    track("workout_started", {
+      day:           day.day,
+      focus:         day.focus,
+      exerciseCount: exercises.length + skillWork.length,
+      source:        "in_app",
+    });
   }
 
   useEffect(() => {
@@ -127,6 +134,24 @@ export default function WorkoutClient({ day }: Props) {
   }
 
   function handleSwap(key: string, newName: string, newReps: string) {
+    // Determine direction (easier / harder / alternative) for analytics by
+    // matching the new name against the original exercise's swapOptions.
+    const [section, idxStr] = key.split(":");
+    const idx = Number(idxStr);
+    const original = section === "skill" ? skillWork[idx] : exercises[idx];
+    let direction: "easier" | "harder" | "alternative" | "unknown" = "unknown";
+    if (original?.swapOptions) {
+      if (original.swapOptions.easier.includes(newName))            direction = "easier";
+      else if (original.swapOptions.harder.includes(newName))       direction = "harder";
+      else if (original.swapOptions.alternatives.includes(newName)) direction = "alternative";
+    }
+    track("workout_swap_used", {
+      day:        day.day,
+      from:       original?.name,
+      to:         newName,
+      direction,
+      isSkillWork: section === "skill",
+    });
     // Check whether this card had any reps entered before the swap
     const hadReps = (setInputs[key] ?? []).some(v => v !== "" && Number(v) > 0);
     // Clear the inputs so old reps don't carry over to the new exercise name
@@ -199,6 +224,13 @@ export default function WorkoutClient({ day }: Props) {
     setWorkoutEval(evaluateWorkout(evalInputs));
     setSaving(false);
     setStatus("done");
+    track("workout_completed", {
+      day:           day.day,
+      focus:         day.focus,
+      exerciseCount: exercises.length + skillWork.length,
+      durationSec:   elapsed,
+      source:        "in_app",
+    });
   }
 
   const totalExercises = exercises.length + skillWork.length;

@@ -15,6 +15,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@/lib/analytics";
 import type {
   ProGoalId,
   SessionLength,
@@ -154,6 +155,20 @@ export default function ProOnboardingFormV2({ resetMode }: { resetMode?: boolean
       try { sessionStorage.removeItem(PRO_ONBOARDING_KEY); } catch { /* ignore */ }
     }
   }, [resetMode]);
+
+  // Fire analytics events on first mount:
+  //   - onboarding_started: always
+  //   - checkout_completed: only if landing here from /checkout/success
+  //     (signaled by ?checkout=success on the URL)
+  useEffect(() => {
+    track("onboarding_started");
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("checkout") === "success") {
+        track("checkout_completed", { source: "onboarding" });
+      }
+    }
+  }, []);
 
   const primaryGoal    = values.primaryGoal as ProGoalId | undefined;
   const secondaryGoals = (values.secondaryGoals as ProGoalId[]) ?? [];

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { WeeklyPlan, TrainingDay, Exercise } from "@/types";
+import { track } from "@/lib/analytics";
 
 const S = {
   bg:          "#0f0f0e",
@@ -82,7 +83,15 @@ export default function DashboardClient({ initialPlan, firstName, week, level, g
   const [saving,          setSaving]          = useState(false);
 
   useEffect(() => {
-    if (window.location.search.includes("success=true")) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success") {
+      // Fired here for users who go straight to the dashboard after checkout
+      // (i.e. they had already completed pro onboarding previously). The other
+      // path — first-time pro users — fires checkout_completed from
+      // ProOnboardingFormV2 instead.
+      track("checkout_completed", { source: "dashboard" });
+    }
+    if (params.get("success") === "true" || params.get("checkout") === "success") {
       setShowWelcome(true);
       const t = setTimeout(() => setShowWelcome(false), 5000);
       return () => clearTimeout(t);
@@ -90,6 +99,9 @@ export default function DashboardClient({ initialPlan, firstName, week, level, g
   }, []);
 
   async function handleGenerate() {
+    const isFirstPlan = !plan;
+    track("generate_plan_clicked", { isFirstPlan, source: "dashboard" });
+
     setGenerating(true);
     setMessage(null);
     setUpdatedAt(null);
@@ -99,7 +111,11 @@ export default function DashboardClient({ initialPlan, firstName, week, level, g
       if (res.ok) {
         setPlan(data.plan);
         setUpdatedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+        if (isFirstPlan) {
+          track("first_plan_generated", { source: "dashboard" });
+        }
       } else {
+        track("generate_plan_failed", { source: "dashboard", status: res.status });
         setMessage(
           typeof data.error === "string"
             ? data.error
@@ -107,6 +123,7 @@ export default function DashboardClient({ initialPlan, firstName, week, level, g
         );
       }
     } catch {
+      track("generate_plan_failed", { source: "dashboard", status: "network_error" });
       setMessage("Something went wrong. Try again.");
     } finally {
       setGenerating(false);
