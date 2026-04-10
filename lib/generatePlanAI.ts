@@ -1258,14 +1258,59 @@ export async function generatePlanAI(
     return raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   }
 
-  // ── Attempt 1: API call ───────────────────────────────────────────────────
+  // ── Retry helper for transient Gemini API failures ───────────────────────
+  // Gemini returns 503 "high demand" responses fairly often, especially on
+  // gemini-2.5-flash. Without retries, a single transient blip kills the
+  // entire plan generation request. We retry on 5xx and 429 (rate limit) and
+  // network errors with exponential backoff. Other errors (4xx, auth, etc.)
+  // fail fast — they aren't going to fix themselves.
+  async function callGeminiWithRetry(promptText: string, label: string): Promise<string> {
+    const MAX_ATTEMPTS = 4;
+    const BACKOFF_MS = [800, 2000, 5000]; // delays before attempts 2, 3, 4
+
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const result = await model.generateContent(promptText);
+        if (attempt > 1) {
+          console.log(`[generatePlanAI] ${label} — succeeded on attempt ${attempt}/${MAX_ATTEMPTS}.`);
+        }
+        return cleanText(result.response.text());
+      } catch (err) {
+        lastErr = err;
+        const status = (err as { status?: number })?.status;
+        const isRetryable =
+          status === undefined || // network error / no response
+          status === 429 ||       // rate limited
+          (status >= 500 && status < 600);
+
+        if (!isRetryable || attempt === MAX_ATTEMPTS) {
+          break;
+        }
+
+        const delay = BACKOFF_MS[attempt - 1];
+        console.warn(
+          `[generatePlanAI] ${label} — attempt ${attempt}/${MAX_ATTEMPTS} failed (status ${status ?? "network"}). Retrying in ${delay}ms.`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    throw lastErr;
+  }
+
+  // ── Attempt 1: API call (with retries) ───────────────────────────────────
   let rawText1: string;
   try {
-    const result = await model.generateContent(prompt);
-    rawText1 = cleanText(result.response.text());
+    rawText1 = await callGeminiWithRetry(prompt, "Attempt 1");
   } catch (err) {
-    console.error("[generatePlanAI] Attempt 1 — API call failed:", err);
-    throw new ProPlanGenerationError("Plan generation failed. Please try again.");
+    console.error("[generatePlanAI] Attempt 1 — API call failed after retries:", err);
+    const status = (err as { status?: number })?.status;
+    const userMessage =
+      status === 503 || status === 429
+        ? "Our AI is busy right now. Please try again in a moment."
+        : "Plan generation failed. Please try again.";
+    throw new ProPlanGenerationError(userMessage);
   }
 
   // ── Attempt 1: parse + structural validate ────────────────────────────────
