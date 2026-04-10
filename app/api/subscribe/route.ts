@@ -17,8 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
     }
 
-    // Calculate level and generate plan
-    const result = assessUser(body);
+    const result = assessUser(body, []);
 
     // Subscribe to beehiiv (non-blocking: we still return the plan if it fails)
     const beehiivResult = await subscribeToBeehiiv({
@@ -37,10 +36,16 @@ export async function POST(req: NextRequest) {
       console.error("Resend email error:", emailResult.error);
     }
 
-    // Upsert profile in Supabase — saves email, goal, level for later auth linking
+    // Upsert profile in Supabase — saves email, goal, level, training preferences
     const { error: dbError } = await supabaseAdmin
       .from("profiles")
-      .upsert({ email, goal: body.goal, level: result.level }, { onConflict: "email" });
+      .upsert({
+        email,
+        goal: body.goal,
+        level: result.level,
+        days_per_week: body.daysPerWeek,
+        equipment: body.equipment,
+      }, { onConflict: "email" });
     if (dbError) {
       console.error("Supabase profile upsert error:", dbError.message);
     }
