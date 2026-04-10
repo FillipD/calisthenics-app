@@ -27,75 +27,115 @@ export default async function Home() {
   }
 
   return (
-    <main
+    <div
       style={{
         minHeight: "100dvh",
         background: S.bg,
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2.5rem 1.25rem",
-        textAlign: "center",
       }}
     >
-      <h1
+      <main
         style={{
-          margin: "0 0 0.5rem",
-          fontSize: "2.5rem",
-          fontWeight: 800,
-          color: S.white,
-          letterSpacing: "-0.03em",
-          lineHeight: 1,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2.5rem 1.25rem",
+          textAlign: "center",
         }}
       >
-        CaliPlan
-      </h1>
-
-      <p
-        style={{
-          margin: "0 0 2.5rem",
-          fontSize: "1rem",
-          color: S.muted,
-        }}
-      >
-        Your adaptive calisthenics training app
-      </p>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", width: "100%", maxWidth: "260px" }}>
-        <Link
-          href="/start"
+        <h1
           style={{
-            background: S.muscle,
-            color: "#0f0f0e",
-            padding: "0.85rem 1.5rem",
-            borderRadius: "8px",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            textDecoration: "none",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Get started free
-        </Link>
-
-        <Link
-          href="/sign-in"
-          style={{
-            background: "none",
+            margin: "0 0 0.5rem",
+            fontSize: "2.5rem",
+            fontWeight: 800,
             color: S.white,
-            padding: "0.85rem 1.5rem",
-            borderRadius: "8px",
-            fontWeight: 600,
-            fontSize: "0.95rem",
-            textDecoration: "none",
-            border: `1px solid ${S.border}`,
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.03em",
+            lineHeight: 1,
           }}
         >
-          Sign in
-        </Link>
-      </div>
-    </main>
+          CaliPlan
+        </h1>
+
+        <p
+          style={{
+            margin: "0 0 2.5rem",
+            fontSize: "1rem",
+            color: S.muted,
+          }}
+        >
+          Your adaptive calisthenics training app
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", width: "100%", maxWidth: "260px" }}>
+          <Link
+            href="/start"
+            style={{
+              background: S.muscle,
+              color: "#0f0f0e",
+              padding: "0.85rem 1.5rem",
+              borderRadius: "8px",
+              fontWeight: 700,
+              fontSize: "0.95rem",
+              textDecoration: "none",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Get started free
+          </Link>
+
+          <Link
+            href="/sign-in"
+            style={{
+              background: "none",
+              color: S.white,
+              padding: "0.85rem 1.5rem",
+              borderRadius: "8px",
+              fontWeight: 600,
+              fontSize: "0.95rem",
+              textDecoration: "none",
+              border: `1px solid ${S.border}`,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Sign in
+          </Link>
+        </div>
+      </main>
+
+      <footer
+        style={{
+          padding: "1.5rem 1.25rem 2rem",
+          textAlign: "center",
+          borderTop: `1px solid ${S.border}`,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            gap: "1.5rem",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            fontSize: "0.78rem",
+            color: S.muted,
+          }}
+        >
+          <Link href="/privacy" style={{ color: S.muted, textDecoration: "none" }}>
+            Privacy
+          </Link>
+          <Link href="/terms" style={{ color: S.muted, textDecoration: "none" }}>
+            Terms
+          </Link>
+          <Link href="/contact" style={{ color: S.muted, textDecoration: "none" }}>
+            Contact
+          </Link>
+        </div>
+        <p style={{ margin: "0.75rem 0 0", fontSize: "0.7rem", color: S.muted }}>
+          © {new Date().getFullYear()} Manly Prime
+        </p>
+      </footer>
+    </div>
   );
 }
