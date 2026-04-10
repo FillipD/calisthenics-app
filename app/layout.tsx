@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import Navigation from "@/components/Navigation";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +12,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider>
       <html lang="en">
-        <body>{children}</body>
+        <body>
+          <Navigation />
+          {/* md:pt-14 clears the fixed desktop top nav (56px); pb-20 clears the fixed mobile bottom nav */}
+          <div className="md:pt-14 pb-20 md:pb-0">
+            {children}
+          </div>
+        </body>
       </html>
     </ClerkProvider>
   );

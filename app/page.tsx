@@ -1,4 +1,7 @@
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getOrLinkProfile } from "@/lib/getOrLinkProfile";
 
 const S = {
   bg: "#0f0f0e",
@@ -8,7 +11,21 @@ const S = {
   border: "#2e2e2b",
 };
 
-export default function Home() {
+export default async function Home() {
+  const user = await currentUser();
+
+  if (user) {
+    const profile = await getOrLinkProfile(user);
+
+    if (!profile) {
+      redirect("/start");
+    } else if (profile.subscription_status === "pro") {
+      redirect("/dashboard");
+    } else {
+      redirect("/pricing");
+    }
+  }
+
   return (
     <main
       style={{

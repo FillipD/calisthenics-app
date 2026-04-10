@@ -22,7 +22,7 @@ html {
 }
 
 body {
-  background-color: var(--chalk);
+  background-color: #0f0f0e;
   color: var(--ink);
   font-family: 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;

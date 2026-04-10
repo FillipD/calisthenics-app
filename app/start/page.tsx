@@ -4,9 +4,21 @@ import { useState } from "react";
 import type { Goal, AssessmentResult } from "@/types";
 
 const GOALS: { value: Goal; label: string; emoji: string }[] = [
-  { value: "lose-weight", label: "Lose weight", emoji: "🔥" },
+  { value: "build-strength", label: "Build strength", emoji: "🏋️" },
   { value: "build-muscle", label: "Build muscle", emoji: "💪" },
-  { value: "build-muscle-lose-weight", label: "Both", emoji: "⚡" },
+  { value: "build-strength-muscle", label: "Both", emoji: "⚡" },
+];
+
+const EQUIPMENT_OPTIONS = [
+  "Pull-up bar",
+  "Parallel bars / dip bars",
+  "Rings",
+  "Parallettes",
+  "Resistance bands",
+  "Nordic curl anchor",
+  "Weights (belt or vest)",
+  "Vertical pole",
+  "Bodyweight only",
 ];
 
 const S = {
@@ -27,11 +39,24 @@ export default function Page() {
   const [pullUps, setPullUps] = useState("");
   const [pushUps, setPushUps] = useState("");
   const [dips, setDips] = useState("");
-  const [goal, setGoal] = useState<Goal>("build-muscle");
+  const [goal, setGoal] = useState<Goal>("build-strength");
+  const [daysPerWeek, setDaysPerWeek] = useState(3);
+  const [equipment, setEquipment] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<AssessmentResult | null>(null);
+
+  function toggleEquipment(item: string) {
+    if (item === "Bodyweight only") {
+      setEquipment(["Bodyweight only"]);
+    } else {
+      setEquipment(prev => {
+        const without = prev.filter(e => e !== "Bodyweight only" && e !== item);
+        return prev.includes(item) ? without : [...without, item];
+      });
+    }
+  }
 
   async function handleTestSubmit() {
     setError("");
@@ -40,7 +65,7 @@ export default function Page() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pullUps: 5, pushUps: 20, dips: 5, goal: "build-muscle", email: "test@test.com" }),
+        body: JSON.stringify({ pullUps: 5, pushUps: 20, dips: 5, goal: "build-strength", daysPerWeek: 3, equipment: ["Pull-up bar"], email: "test@test.com" }),
       });
       const data = await res.json();
       if (res.ok) setResult(data);
@@ -64,6 +89,8 @@ export default function Page() {
           pushUps: Number(pushUps),
           dips: Number(dips),
           goal,
+          daysPerWeek,
+          equipment,
           email,
         }),
       });
@@ -289,6 +316,103 @@ export default function Page() {
                         ✓
                       </span>
                     )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Days per week */}
+          <div>
+            <p
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                color: S.muted,
+                marginBottom: "0.6rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+              }}
+            >
+              How many days per week do you want to train?
+            </p>
+            <div style={{ display: "flex", gap: "0.45rem" }}>
+              {[1, 2, 3, 4, 5, 6].map(n => {
+                const active = daysPerWeek === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setDaysPerWeek(n)}
+                    style={{
+                      flex: 1,
+                      padding: "0.75rem 0",
+                      border: `1.5px solid ${active ? S.muscle : S.border}`,
+                      borderRadius: "10px",
+                      background: active ? "rgba(200,240,74,0.07)" : S.surface,
+                      color: active ? S.muscle : S.mutedLight,
+                      fontSize: "1rem",
+                      fontWeight: active ? 700 : 400,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      transition: "border-color 0.15s, color 0.15s",
+                    }}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Equipment */}
+          <div>
+            <p
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                color: S.muted,
+                marginBottom: "0.6rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+              }}
+            >
+              What equipment do you have access to?
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "0.45rem",
+              }}
+            >
+              {EQUIPMENT_OPTIONS.map(option => {
+                const active = equipment.includes(option);
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => toggleEquipment(option)}
+                    style={{
+                      gridColumn: option === "Bodyweight only" ? "span 2" : undefined,
+                      padding: "0.75rem 0.9rem",
+                      border: `1.5px solid ${active ? S.muscle : S.border}`,
+                      borderRadius: "10px",
+                      background: active ? "rgba(200,240,74,0.07)" : S.surface,
+                      color: active ? S.muscle : S.mutedLight,
+                      fontSize: "0.82rem",
+                      fontWeight: active ? 600 : 400,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                      lineHeight: 1.35,
+                      transition: "border-color 0.15s, color 0.15s",
+                    }}
+                  >
+                    {active && (
+                      <span style={{ marginRight: "0.4rem", fontSize: "0.65rem" }}>✓</span>
+                    )}
+                    {option}
                   </button>
                 );
               })}
@@ -592,7 +716,7 @@ function ResultView({
                               minWidth: "4rem",
                             }}
                           >
-                            {ex.reps}
+                            {ex.reps.includes("sec") ? "Max Hold" : ex.reps}
                           </span>
                         </div>
                       ))}
@@ -632,6 +756,61 @@ function ResultView({
           {result.plan.note}
         </div>
 
+        {/* Pro upsell CTA */}
+        <div
+          style={{
+            background: S.surfaceHigh,
+            border: `1.5px solid ${S.border}`,
+            borderRadius: "16px",
+            padding: "1.5rem 1.25rem",
+            marginBottom: "1rem",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 0.5rem",
+              fontSize: "1.1rem",
+              fontWeight: 700,
+              color: S.white,
+              letterSpacing: "-0.02em",
+              lineHeight: 1.25,
+            }}
+          >
+            Want your plan to adapt every week?
+          </p>
+          <p
+            style={{
+              margin: "0 0 1.25rem",
+              fontSize: "0.875rem",
+              color: S.muted,
+              lineHeight: 1.65,
+            }}
+          >
+            CaliPlan Pro generates a new personalised plan each week based on what you actually logged. Your workouts get smarter as you progress.
+          </p>
+          <a
+            href="/pricing"
+            style={{
+              display: "block",
+              background: S.muscle,
+              color: S.bg,
+              borderRadius: "10px",
+              padding: "0.9rem 1.25rem",
+              textAlign: "center",
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              textDecoration: "none",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Start training with CaliPlan Pro →
+          </a>
+        </div>
+
+        <p style={{ color: S.muted, fontSize: "0.8rem", marginBottom: "1rem", textAlign: "center" }}>
+          This plan has also been sent to your email. If you don&apos;t see it, check your spam folder.
+        </p>
+
         <button
           onClick={onReset}
           style={{
@@ -643,11 +822,9 @@ function ResultView({
             cursor: "pointer",
             fontSize: "0.875rem",
             fontFamily: "inherit",
+            width: "100%",
           }}
         >
-          <p style={{ color: S.muted, fontSize: "0.8rem", marginBottom: "1.5rem" }}>
-            This plan has also been sent to your email. If you don't see it, check your spam folder.
-          </p>
           ← Start over
         </button>
       </div>
