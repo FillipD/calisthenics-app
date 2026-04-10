@@ -43,7 +43,7 @@ export default function TermsPage() {
           CaliPlan is a calisthenics training app that creates personalized weekly workout plans based on your current strength and goals. Free users can complete a one-time assessment and receive a 1-week plan. Pro subscribers get adaptive weekly plans that update based on logged workouts, full skill tree progression tracking, and ongoing access to all training tools.
         </p>
         <p style={P}>
-          CaliPlan is operated by <strong style={{ color: S.white }}>Manly Prime</strong>, based in Denmark.
+          CaliPlan is operated by <strong style={{ color: S.white }}>Manly Prime</strong> (CVR 43013963), based in Denmark.
         </p>
 
         <h2 style={H2}>Who can use CaliPlan</h2>

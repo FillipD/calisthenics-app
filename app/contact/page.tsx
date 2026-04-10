@@ -70,6 +70,7 @@ export default function ContactPage() {
         }}>
           <DetailRow label="App name" value="CaliPlan" />
           <DetailRow label="Operated by" value="Manly Prime" />
+          <DetailRow label="CVR" value="43013963" />
           <DetailRow label="Country" value="Denmark" />
           <DetailRow label="Support" value="fillipdavidsen@gmail.com" last />
         </div>

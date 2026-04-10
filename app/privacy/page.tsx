@@ -40,7 +40,7 @@ export default function PrivacyPage() {
 
         <h2 style={H2}>Who operates CaliPlan</h2>
         <p style={P}>
-          CaliPlan is operated by <strong style={{ color: S.white }}>Manly Prime</strong>, based in Denmark.
+          CaliPlan is operated by <strong style={{ color: S.white }}>Manly Prime</strong> (CVR 43013963), based in Denmark.
           You can reach us at <a href="mailto:fillipdavidsen@gmail.com" style={A}>fillipdavidsen@gmail.com</a>.
         </p>
 
