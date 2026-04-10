@@ -222,6 +222,18 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
         <p style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.75rem", color: S.muted }}>
           Secure payment via Stripe. Cancel anytime from your account settings.
         </p>
+
+        <p style={{ marginTop: "0.75rem", textAlign: "center", fontSize: "0.72rem", color: S.muted }}>
+          By subscribing you agree to our{" "}
+          <a href="/terms" style={{ color: S.mutedLight, textDecoration: "underline" }}>
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" style={{ color: S.mutedLight, textDecoration: "underline" }}>
+            Privacy Policy
+          </a>
+          .
+        </p>
       </div>
     </main>
   );
