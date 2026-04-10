@@ -2,9 +2,14 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Auth required, no subscription check (e.g. the route that creates the subscription)
+// Auth required, no subscription check.
+//   - /api/stripe/checkout creates a NEW subscription (free users must reach it)
+//   - /api/stripe/portal manages an EXISTING subscription (recently-canceled
+//     users in their grace period must be able to reach it to update billing
+//     or reactivate, even if their pro status is technically lapsing)
 const isAuthOnly = createRouteMatcher([
   "/api/stripe/checkout",
+  "/api/stripe/portal",
 ]);
 
 // Auth + active subscription required.

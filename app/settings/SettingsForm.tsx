@@ -47,6 +47,25 @@ export default function SettingsForm({ initialDaysPerWeek, initialGoal, initialE
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
+
+  async function handleManageSubscription() {
+    setPortalLoading(true);
+    setPortalError(null);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return; // browser is leaving — don't reset loading
+      }
+      setPortalError(data.error ?? "Could not open subscription portal.");
+    } catch {
+      setPortalError("Could not open subscription portal. Please try again.");
+    }
+    setPortalLoading(false);
+  }
 
   function toggleEquipment(item: string) {
     if (item === "Bodyweight only") {
@@ -233,6 +252,43 @@ export default function SettingsForm({ initialDaysPerWeek, initialGoal, initialE
             Changes saved.
           </p>
         )}
+
+        {/* ── Section: Subscription ── */}
+        <section style={{ marginTop: "3rem", paddingTop: "2rem", borderTop: `1px solid ${S.border}` }}>
+          <p style={{ margin: "0 0 0.35rem", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", color: S.muted }}>
+            Billing
+          </p>
+          <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.1rem", fontWeight: 700, color: S.white, letterSpacing: "-0.02em" }}>
+            Subscription
+          </h2>
+          <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: S.mutedLight, lineHeight: 1.6 }}>
+            Update your payment method, view invoices, or cancel your subscription. Cancellations take effect at the end of your current billing period — you keep pro access until then.
+          </p>
+
+          <button
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+            style={{
+              width: "100%",
+              background: "transparent",
+              color: portalLoading ? S.muted : S.white,
+              border: `1px solid ${S.border}`,
+              borderRadius: "8px",
+              padding: "0.85rem",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              cursor: portalLoading ? "not-allowed" : "pointer",
+              letterSpacing: "-0.01em",
+              transition: "border-color 0.15s, color 0.15s",
+            }}
+          >
+            {portalLoading ? "Opening portal…" : "Manage subscription"}
+          </button>
+
+          {portalError && (
+            <p style={{ color: S.rust, fontSize: "0.85rem", marginTop: "0.75rem" }}>{portalError}</p>
+          )}
+        </section>
 
       </div>
     </main>
