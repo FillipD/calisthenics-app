@@ -112,8 +112,11 @@ export default async function CheckoutSuccessPage({
     .eq("user_id", profile.id)
     .limit(1);
 
+  // The `?checkout=success` query param is read by DashboardClient and
+  // ProOnboardingFormV2 to fire the `checkout_completed` analytics event
+  // exactly once on first mount after a successful payment.
   if (skills && skills.length > 0) {
-    redirect("/dashboard?success=true");
+    redirect("/dashboard?success=true&checkout=success");
   }
-  redirect("/onboarding/pro");
+  redirect("/onboarding/pro?checkout=success");
 }

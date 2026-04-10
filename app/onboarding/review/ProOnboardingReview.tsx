@@ -14,6 +14,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@/lib/analytics";
 import { NODE_MAP, findBestSkillStep } from "@/lib/skillTree";
 import type { SkillCategory } from "@/lib/skillTree";
 import type { ProOnboardingData, ProOnboardingDataV2, ProgressStatus } from "@/types";
@@ -166,6 +167,13 @@ export default function ProOnboardingReview() {
 
       try { sessionStorage.removeItem(PRO_ONBOARDING_KEY); } catch { /* ignore */ }
       saved = true;
+      track("onboarding_completed", {
+        primaryGoal:   goalNodeIds[0],
+        goalCount:     goalNodeIds.length,
+        trainingDays:  profileFieldsRef.current?.daysPerWeek,
+        sessionLength: profileFieldsRef.current?.sessionLength,
+        emphasis:      profileFieldsRef.current?.emphasis,
+      });
     } catch {
       setSaveError("Network error. Please try again.");
     } finally {
@@ -176,12 +184,15 @@ export default function ProOnboardingReview() {
 
     // Onboarding saved — now auto-generate the first plan.
     setGeneratingPlan(true);
+    track("generate_plan_clicked", { isFirstPlan: true, source: "onboarding" });
     try {
       const planRes  = await fetch("/api/plan/generate", { method: "POST" });
       const planData = await planRes.json().catch(() => ({}));
       if (planRes.ok) {
+        track("first_plan_generated", { source: "onboarding" });
         router.push("/dashboard");
       } else {
+        track("generate_plan_failed", { source: "onboarding", status: planRes.status });
         setPlanGenError(
           typeof planData.error === "string"
             ? planData.error
@@ -189,22 +200,26 @@ export default function ProOnboardingReview() {
         );
       }
     } catch {
+      track("generate_plan_failed", { source: "onboarding", status: "network_error" });
       setPlanGenError("Network error. Please check your connection and try again.");
     } finally {
       setGeneratingPlan(false);
     }
-  }, [progress, activeSkills, router]);
+  }, [progress, activeSkills, goalNodeIds, router]);
 
   // ── Retry plan generation (profile already saved) ────────────────────────
   const retryPlanGeneration = useCallback(async () => {
     setPlanGenError(null);
     setGeneratingPlan(true);
+    track("generate_plan_clicked", { isFirstPlan: true, source: "onboarding_retry" });
     try {
       const planRes  = await fetch("/api/plan/generate", { method: "POST" });
       const planData = await planRes.json().catch(() => ({}));
       if (planRes.ok) {
+        track("first_plan_generated", { source: "onboarding_retry" });
         router.push("/dashboard");
       } else {
+        track("generate_plan_failed", { source: "onboarding_retry", status: planRes.status });
         setPlanGenError(
           typeof planData.error === "string"
             ? planData.error
@@ -212,6 +227,7 @@ export default function ProOnboardingReview() {
         );
       }
     } catch {
+      track("generate_plan_failed", { source: "onboarding_retry", status: "network_error" });
       setPlanGenError("Network error. Please check your connection and try again.");
     } finally {
       setGeneratingPlan(false);

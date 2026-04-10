@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Exercise } from "@/types";
+import { track } from "@/lib/analytics";
 
 const S = {
   bg: "#0f0f0e",
@@ -96,6 +97,13 @@ export default function LogForm({ day, focus, exercises, skillWork, existingLogs
       setSaving(false);
       return;
     }
+
+    track("workout_completed", {
+      day,
+      focus,
+      exerciseCount: exercises.length + skillWork.length,
+      source:        "manual_log",
+    });
 
     router.push("/dashboard");
   }

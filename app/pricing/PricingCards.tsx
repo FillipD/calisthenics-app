@@ -2,7 +2,8 @@
 
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { track } from "@/lib/analytics";
 
 const S = {
   bg:          "#0f0f0e",
@@ -34,11 +35,17 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
 
+  useEffect(() => {
+    track("pricing_viewed");
+  }, []);
+
   async function handleCheckout(priceId: string, period: "monthly" | "yearly") {
     if (!isSignedIn) {
       router.push("/sign-up?redirect_url=/pricing");
       return;
     }
+
+    track("checkout_started", { period });
 
     setLoading(period);
     try {
