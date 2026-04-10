@@ -9,10 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.0.7",
+    "@dagrejs/dagre": "^3.0.0",
+    "@google/generative-ai": "^0.24.1",
+    "@stripe/stripe-js": "^9.0.1",
+    "@supabase/supabase-js": "^2.100.1",
+    "lucide-react": "^1.7.0",
     "next": "^16.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "resend": "^6.9.4"
+    "reactflow": "^11.11.4",
+    "resend": "^6.9.4",
+    "stripe": "^21.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
