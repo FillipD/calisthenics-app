@@ -31,7 +31,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p style={{ margin: "0 0 2rem", fontSize: "0.8rem", color: S.muted }}>
-          Last updated: April 10, 2026
+          Last updated: April 11, 2026
         </p>
 
         <p style={{ margin: "0 0 2rem" }}>
@@ -94,6 +94,7 @@ export default function PrivacyPage() {
           <li><strong style={{ color: S.white }}>Google Gemini</strong> — AI generation of personalized weekly plans (pro users only)</li>
           <li><strong style={{ color: S.white }}>Resend</strong> — email delivery (e.g. sending free assessment results)</li>
           <li><strong style={{ color: S.white }}>Vercel</strong> — application hosting</li>
+          <li><strong style={{ color: S.white }}>PostHog</strong> — product analytics for funnel and usage measurement (EU-hosted, no advertising or tracking cookies)</li>
         </ul>
         <p style={P}>
           We do not sell your data, and we do not share it with advertisers or marketing networks.
