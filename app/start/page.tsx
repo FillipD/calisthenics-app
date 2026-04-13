@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { Goal, AssessmentResult } from "@/types";
+import { getPreviewTree } from "@/lib/skillTeaser";
+import type { PreviewTreeData } from "@/lib/skillTeaser";
 
 const GOALS: { value: Goal; label: string; emoji: string }[] = [
   { value: "build-strength", label: "Build strength", emoji: "🏋️" },
@@ -108,7 +110,7 @@ export default function Page() {
   }
 
   if (result) {
-    return <ResultView result={result} onReset={() => setResult(null)} />;
+    return <ResultView result={result} formData={{ pullUps: Number(pullUps), pushUps: Number(pushUps), dips: Number(dips) }} onReset={() => setResult(null)} />;
   }
 
   const isDev = process.env.NODE_ENV === "development";
@@ -499,13 +501,103 @@ export default function Page() {
   );
 }
 
+const HEX_CLIP = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+
+function SkillTreePreview({ data }: { data: PreviewTreeData }) {
+  // Small cells so the full tree fits in a compact space — text is intentionally unreadable
+  const cellW = 46;
+  const cellH = 44;
+  const nodeW = 32;
+  const nodeH = 28;
+  const treeW = data.cols * cellW + nodeW;
+  const treeH = data.rows * cellH + nodeH;
+
+  return (
+    <svg width={treeW} height={treeH} style={{ display: "block" }}>
+      {/* Edges */}
+      {data.edges.map((edge, i) => {
+        const fromNode = data.nodes.find(n => n.id === edge.fromId);
+        const toNode = data.nodes.find(n => n.id === edge.toId);
+        if (!fromNode || !toNode) return null;
+        const x1 = fromNode.col * cellW + nodeW / 2;
+        const y1 = fromNode.row * cellH + nodeH / 2;
+        const x2 = toNode.col * cellW + nodeW / 2;
+        const y2 = toNode.row * cellH + nodeH / 2;
+        return (
+          <line
+            key={i}
+            x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke={edge.lit ? "rgba(200,240,74,0.3)" : "#2e2e2b"}
+            strokeWidth={1}
+          />
+        );
+      })}
+      {/* Hexagon nodes — no text, just colored shapes */}
+      {data.nodes.map((node) => {
+        const cx = node.col * cellW + nodeW / 2;
+        const cy = node.row * cellH + nodeH / 2;
+        const rx = nodeW / 2;
+        const ry = nodeH / 2;
+        // Flat-top hexagon points
+        const pts = [
+          [cx, cy - ry],
+          [cx + rx, cy - ry * 0.5],
+          [cx + rx, cy + ry * 0.5],
+          [cx, cy + ry],
+          [cx - rx, cy + ry * 0.5],
+          [cx - rx, cy - ry * 0.5],
+        ].map(p => p.join(",")).join(" ");
+
+        let fill = "#1a1a18";
+        let opacity = 0.45;
+        let glowFilter: string | undefined;
+
+        if (node.state === "current") {
+          fill = "#c8f04a"; opacity = 1;
+          glowFilter = "url(#glow)";
+        } else if (node.state === "past") {
+          fill = "#f5f0e8"; opacity = 0.8;
+        } else if (node.state === "goal") {
+          fill = "#c8f04a"; opacity = 0.3;
+        }
+
+        return (
+          <polygon
+            key={node.id}
+            points={pts}
+            fill={fill}
+            opacity={opacity}
+            stroke={node.state === "goal" ? "rgba(200,240,74,0.4)" : "rgba(46,46,43,0.5)"}
+            strokeWidth={0.5}
+            filter={glowFilter}
+          />
+        );
+      })}
+      {/* Glow filter for current node */}
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
 function ResultView({
   result,
+  formData,
   onReset,
 }: {
   result: AssessmentResult;
+  formData: { pullUps: number; pushUps: number; dips: number };
   onReset: () => void;
 }) {
+  const pullTree = getPreviewTree("pull", formData.pullUps, formData.pushUps, formData.dips);
+
   return (
     <main
       style={{
@@ -561,7 +653,7 @@ function ResultView({
 
         {/* Max -2 explanation */}
         <p style={{ color: S.muted, fontSize: "0.8rem", marginBottom: "1rem" }}>
-          (Max -2 = stop 1–2 reps before failure — you should feel like you could do one more)
+          (Max -2 = stop 1-2 reps before failure -- you should feel like you could do one more)
         </p>
 
         {/* Days */}
@@ -728,65 +820,282 @@ function ResultView({
           ))}
         </div>
 
-        {/* Note */}
-        <div
-          style={{
-            background: S.surfaceHigh,
-            border: `1.5px solid ${S.border}`,
-            borderRadius: "14px",
-            padding: "1.1rem 1.25rem",
-            marginBottom: "1.5rem",
-            fontSize: "0.875rem",
-            lineHeight: 1.7,
-            color: S.mutedLight,
-          }}
-        >
-          <p
+        {/* ── Transition divider ─────────────────────────────────────────── */}
+        <div style={{ marginBottom: "1.75rem" }}>
+          <div
             style={{
-              fontSize: "0.68rem",
-              fontWeight: 600,
-              color: S.muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.07em",
-              marginBottom: "0.5rem",
+              width: "40px",
+              height: "3px",
+              background: S.muscle,
+              borderRadius: "2px",
+              marginBottom: "1.25rem",
+            }}
+          />
+          <h2
+            className="font-display"
+            style={{
+              fontSize: "clamp(1.4rem, 5vw, 1.75rem)",
+              fontWeight: 800,
+              color: S.white,
+              lineHeight: 1.15,
+              marginBottom: "0.65rem",
+              letterSpacing: "-0.02em",
             }}
           >
-            Coach note
-          </p>
-          {result.plan.note}
-        </div>
-
-        {/* Pro upsell CTA */}
-        <div
-          style={{
-            background: S.surfaceHigh,
-            border: `1.5px solid ${S.border}`,
-            borderRadius: "16px",
-            padding: "1.5rem 1.25rem",
-            marginBottom: "1rem",
-          }}
-        >
+            This is week 1.<br />
+            Here&apos;s where it leads.
+          </h2>
           <p
             style={{
-              margin: "0 0 0.5rem",
-              fontSize: "1.1rem",
-              fontWeight: 700,
+              color: S.muted,
+              fontSize: "0.9rem",
+              lineHeight: 1.65,
+            }}
+          >
+            Your rep counts place you on a clear path to skills most people think are impossible.
+          </p>
+        </div>
+
+        {/* ── Skill tree preview ───────────────────────────────────────── */}
+        <div
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "16px",
+            border: `1.5px solid ${S.border}`,
+            background: S.bg,
+            height: "340px",
+            marginBottom: "1.5rem",
+          }}
+        >
+          {/* Category tabs */}
+          <div
+            style={{
+              position: "absolute",
+              top: "0.75rem",
+              left: "0.75rem",
+              display: "flex",
+              gap: "0.35rem",
+              zIndex: 3,
+            }}
+          >
+            {["Pull", "Push", "Legs", "Core"].map((cat) => (
+              <span
+                key={cat}
+                style={{
+                  fontSize: "0.62rem",
+                  fontWeight: 600,
+                  color: cat === "Pull" ? S.muscle : S.muted,
+                  background: cat === "Pull" ? "rgba(200,240,74,0.12)" : "rgba(26,26,24,0.85)",
+                  padding: "0.2rem 0.5rem",
+                  borderRadius: "5px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  border: `1px solid ${cat === "Pull" ? "rgba(200,240,74,0.25)" : "rgba(46,46,43,0.6)"}`,
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
+
+          {/* Tree — centered, zoomed out, no readable text */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              paddingTop: "2.5rem",
+              paddingBottom: "4rem",
+            }}
+          >
+            <SkillTreePreview data={pullTree} />
+          </div>
+
+          {/* Edge fades */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 1,
+              background: `
+                linear-gradient(to bottom, ${S.bg} 0%, transparent 15%, transparent 50%, ${S.bg} 90%),
+                linear-gradient(to right, ${S.bg} 0%, transparent 10%, transparent 90%, ${S.bg} 100%)
+              `,
+            }}
+          />
+
+          {/* Bottom overlay with text */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 3,
+              padding: "1.5rem 1.25rem 1rem",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                color: S.white,
+                marginBottom: "0.3rem",
+              }}
+            >
+              Your full progression map
+            </p>
+            <p
+              style={{
+                fontSize: "0.72rem",
+                color: S.muted,
+              }}
+            >
+              100+ exercises across Pull, Push, Legs &amp; Core
+            </p>
+          </div>
+        </div>
+
+        {/* ── Free vs Pro comparison table ──────────────────────────────── */}
+        <div
+          style={{
+            background: S.surface,
+            border: `1.5px solid ${S.border}`,
+            borderRadius: "14px",
+            overflow: "hidden",
+            marginBottom: "1.5rem",
+          }}
+        >
+          {/* Table header */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 70px 70px",
+              borderBottom: `1px solid ${S.border}`,
+            }}
+          >
+            <div style={{ padding: "0.85rem 1rem" }} />
+            <div
+              style={{
+                padding: "0.85rem 0",
+                textAlign: "center",
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                color: S.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              Free
+            </div>
+            <div
+              style={{
+                padding: "0.85rem 0",
+                textAlign: "center",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                color: S.muscle,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                background: "rgba(200,240,74,0.05)",
+              }}
+            >
+              Pro
+            </div>
+          </div>
+          {/* Table rows */}
+          {[
+            { feature: "1-week plan", free: true, pro: true },
+            { feature: "Adaptive weekly plans", free: false, pro: true },
+            { feature: "Skill tree progressions", free: false, pro: true },
+            { feature: "Workout logging", free: false, pro: true },
+            { feature: "Progress tracking", free: false, pro: true },
+            { feature: "Personalised coaching", free: false, pro: true },
+          ].map((row, i, arr) => (
+            <div
+              key={i}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 70px 70px",
+                borderBottom: i < arr.length - 1 ? `1px solid ${S.border}` : "none",
+              }}
+            >
+              <div
+                style={{
+                  padding: "0.7rem 1rem",
+                  fontSize: "0.85rem",
+                  color: S.white,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {row.feature}
+              </div>
+              <div
+                style={{
+                  padding: "0.7rem 0",
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.95rem",
+                }}
+              >
+                {row.free ? "✅" : "❌"}
+              </div>
+              <div
+                style={{
+                  padding: "0.7rem 0",
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.95rem",
+                  background: "rgba(200,240,74,0.05)",
+                }}
+              >
+                ✅
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Primary CTA ────────────────────────────────────────────────── */}
+        <div
+          style={{
+            background: `linear-gradient(135deg, rgba(200,240,74,0.08) 0%, rgba(200,240,74,0.02) 100%)`,
+            border: `1.5px solid rgba(200,240,74,0.25)`,
+            borderRadius: "16px",
+            padding: "1.75rem 1.25rem",
+            marginBottom: "1.25rem",
+            textAlign: "center",
+          }}
+        >
+          <h3
+            className="font-display"
+            style={{
+              fontSize: "1.15rem",
+              fontWeight: 800,
               color: S.white,
+              marginBottom: "0.6rem",
               letterSpacing: "-0.02em",
               lineHeight: 1.25,
             }}
           >
-            Want your plan to adapt every week?
-          </p>
+            Train with a system, not just a plan
+          </h3>
           <p
             style={{
-              margin: "0 0 1.25rem",
-              fontSize: "0.875rem",
               color: S.muted,
+              fontSize: "0.875rem",
               lineHeight: 1.65,
+              marginBottom: "1.25rem",
             }}
           >
-            CaliPlan Pro generates a new personalised plan each week based on what you actually logged. Your workouts get smarter as you progress.
+            Pro generates a new plan every week based on what you log. Your workouts get smarter as you progress.
           </p>
           <a
             href="/pricing"
@@ -794,16 +1103,16 @@ function ResultView({
               display: "block",
               background: S.muscle,
               color: S.bg,
-              borderRadius: "10px",
-              padding: "0.9rem 1.25rem",
+              borderRadius: "12px",
+              padding: "1rem 1.25rem",
               textAlign: "center",
-              fontSize: "0.95rem",
+              fontSize: "1rem",
               fontWeight: 700,
               textDecoration: "none",
               letterSpacing: "-0.01em",
             }}
           >
-            Start training with CaliPlan Pro →
+            Start training with Pro
           </a>
         </div>
 
@@ -825,7 +1134,7 @@ function ResultView({
             width: "100%",
           }}
         >
-          ← Start over
+          Start over
         </button>
       </div>
     </main>

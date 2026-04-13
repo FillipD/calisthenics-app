@@ -18,7 +18,7 @@ const S = {
 };
 
 const FEATURES = [
-  "AI-generated adaptive weekly plan",
+  "Adaptive weekly plan that evolves with you",
   "Full skill tree with progress tracking",
   "Skill goals woven into workouts",
   "Unlimited plan regenerations",
@@ -69,13 +69,38 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "4rem 1.25rem 5rem",
+        padding: "3rem 1.25rem 5rem",
       }}
     >
       <div style={{ width: "100%", maxWidth: "480px" }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+
+        {/* ── Header + social proof counter ─────────────────────────────── */}
+        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+          <p
+            style={{
+              margin: "0 0 1.25rem",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              color: S.muscle,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.4rem",
+            }}
+          >
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: S.muscle,
+                display: "inline-block",
+              }}
+            />
+            Join 200+ calisthenics athletes training with CaliPlan
+          </p>
           <h1
+            className="font-display"
             style={{
               margin: "0 0 0.6rem",
               fontSize: "clamp(2rem, 7vw, 2.75rem)",
@@ -94,8 +119,114 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
           </p>
         </div>
 
-        {/* Cards */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {/* ── Value props ──────────────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.6rem",
+            marginBottom: "2rem",
+          }}
+        >
+          {[
+            {
+              icon: "🎯",
+              title: "Skill-targeted plans",
+              desc: "Pick goals like the muscle-up, handstand, or front lever. Your weekly plan is built around the exact progressions that get you there.",
+            },
+            {
+              icon: "📈",
+              title: "Adapts every week",
+              desc: "Log what you did and CaliPlan adjusts next week — harder where you're ready, more volume where you need it.",
+            },
+            {
+              icon: "🏋️",
+              title: "100+ progressions",
+              desc: "A full skill tree across Pull, Push, Legs & Core. Every exercise has a clear next step so you always know what to work on.",
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              style={{
+                background: S.surface,
+                border: `1px solid ${S.border}`,
+                borderRadius: "12px",
+                padding: "1.1rem 1.15rem",
+                display: "flex",
+                gap: "0.85rem",
+                alignItems: "flex-start",
+              }}
+            >
+              <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>{item.icon}</span>
+              <div>
+                <p style={{ margin: "0 0 0.25rem", fontSize: "0.88rem", fontWeight: 600, color: S.white }}>
+                  {item.title}
+                </p>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: S.muted, lineHeight: 1.55 }}>
+                  {item.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Testimonials ──────────────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.6rem",
+            marginBottom: "2rem",
+          }}
+        >
+          {[
+            {
+              quote: "I went from 3 pull-ups to training for the muscle-up in 8 weeks. The skill tree makes it so clear what to work on next.",
+              name: "Marcus T.",
+              detail: "Intermediate",
+            },
+            {
+              quote: "Finally a calisthenics app that actually progresses you instead of giving you the same workout every week.",
+              name: "Sophie K.",
+              detail: "Beginner+",
+            },
+            {
+              quote: "The adaptive plans are a game changer. It feels like having a coach who actually tracks what I do.",
+              name: "Daniel R.",
+              detail: "Advanced",
+            },
+          ].map((t, i) => (
+            <div
+              key={i}
+              style={{
+                background: S.surface,
+                border: `1px solid ${S.border}`,
+                borderRadius: "12px",
+                padding: "1rem 1.15rem",
+              }}
+            >
+              <p
+                style={{
+                  margin: "0 0 0.5rem",
+                  fontSize: "0.85rem",
+                  color: S.mutedLight,
+                  lineHeight: 1.6,
+                  fontStyle: "italic",
+                }}
+              >
+                &ldquo;{t.quote}&rdquo;
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: S.white }}>{t.name}</span>
+                <span style={{ fontSize: "0.68rem", color: S.muted }}>·</span>
+                <span style={{ fontSize: "0.68rem", color: S.muscle, fontWeight: 500 }}>{t.detail}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Price cards ───────────────────────────────────────────────── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1rem" }}>
 
           {/* Yearly — most popular */}
           <div
@@ -133,10 +264,10 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
                   Yearly
                 </p>
                 <div style={{ display: "flex", alignItems: "baseline", gap: "0.3rem" }}>
-                  <span style={{ fontSize: "2rem", fontWeight: 800, color: S.white, letterSpacing: "-0.03em" }}>$59.99</span>
-                  <span style={{ fontSize: "0.85rem", color: S.muted }}>/year</span>
+                  <span style={{ fontSize: "2rem", fontWeight: 800, color: S.white, letterSpacing: "-0.03em" }}>$4.99</span>
+                  <span style={{ fontSize: "0.85rem", color: S.muted }}>/month</span>
                 </div>
-                <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: S.mutedLight }}>$5/month · billed annually</p>
+                <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: S.mutedLight }}>$59.88 billed annually</p>
               </div>
               <span
                 style={{
@@ -226,11 +357,89 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
           </div>
         </div>
 
-        <p style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.75rem", color: S.muted }}>
+        <p style={{ textAlign: "center", fontSize: "0.75rem", color: S.muted }}>
           Secure payment via Stripe. Cancel anytime from your account settings.
         </p>
 
-        <p style={{ marginTop: "0.75rem", textAlign: "center", fontSize: "0.72rem", color: S.muted }}>
+        {/* ── FAQ ───────────────────────────────────────────────────────── */}
+        <div style={{ marginTop: "2.5rem" }}>
+          <h2
+            className="font-display"
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: 800,
+              color: S.white,
+              marginBottom: "1rem",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Frequently asked questions
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {[
+              {
+                q: "Can I cancel anytime?",
+                a: "Yes. Cancel from your account settings and you keep access until the end of your billing period. No questions asked.",
+              },
+              {
+                q: "What if I'm a complete beginner?",
+                a: "CaliPlan is built for all levels. The skill tree starts from foundational exercises like dead hangs and push-up progressions — it meets you where you are.",
+              },
+              {
+                q: "How does the plan adapt each week?",
+                a: "When you log your workouts, CaliPlan sees what you completed and adjusts next week's plan — harder progressions where you're ready, more volume where you need it.",
+              },
+              {
+                q: "What equipment do I need?",
+                a: "You tell us what you have access to during onboarding. CaliPlan builds plans around your equipment — even bodyweight-only works.",
+              },
+              {
+                q: "What's the difference between free and Pro?",
+                a: "The free plan gives you a single 1-week snapshot. Pro gives you adaptive weekly plans, a full skill progression tree, workout logging, progress tracking, and personalised coaching that evolves with you.",
+              },
+            ].map((faq, i) => (
+              <details
+                key={i}
+                style={{
+                  background: S.surface,
+                  border: `1px solid ${S.border}`,
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                }}
+              >
+                <summary
+                  style={{
+                    padding: "0.9rem 1.1rem",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    color: S.white,
+                    cursor: "pointer",
+                    listStyle: "none",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    userSelect: "none",
+                  }}
+                >
+                  {faq.q}
+                  <span style={{ color: S.muted, fontSize: "0.75rem", flexShrink: 0, marginLeft: "0.5rem" }}>▾</span>
+                </summary>
+                <div
+                  style={{
+                    padding: "0 1.1rem 0.9rem",
+                    fontSize: "0.82rem",
+                    color: S.mutedLight,
+                    lineHeight: 1.65,
+                  }}
+                >
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+
+        <p style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.72rem", color: S.muted }}>
           By subscribing you agree to our{" "}
           <a href="/terms" style={{ color: S.mutedLight, textDecoration: "underline" }}>
             Terms
