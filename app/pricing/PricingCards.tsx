@@ -1,8 +1,8 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 
 const S = {
@@ -31,35 +31,63 @@ interface Props {
 }
 
 export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
+  // Guard against double-firing the auto-checkout effect (React StrictMode
+  // mounts effects twice in dev, and we don't want to hit the Stripe API
+  // twice for the same intent).
+  const autoCheckoutFired = useRef(false);
 
   useEffect(() => {
     track("pricing_viewed");
   }, []);
 
-  async function handleCheckout(priceId: string, period: "monthly" | "yearly") {
-    if (!isSignedIn) {
-      router.push("/sign-up?redirect_url=/pricing");
-      return;
-    }
+  const handleCheckout = useCallback(
+    async (priceId: string, period: "monthly" | "yearly") => {
+      if (!isSignedIn) {
+        // Preserve intent across sign-up so the user lands back on /pricing
+        // with ?checkout=<period> and is auto-forwarded to Stripe — no second
+        // click required.
+        router.push(
+          `/sign-up?redirect_url=${encodeURIComponent(`/pricing?checkout=${period}`)}`,
+        );
+        return;
+      }
 
-    track("checkout_started", { period });
+      track("checkout_started", { period });
 
-    setLoading(period);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch {
-      setLoading(null);
-    }
-  }
+      setLoading(period);
+      try {
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priceId }),
+        });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+        else setLoading(null);
+      } catch {
+        setLoading(null);
+      }
+    },
+    [isSignedIn, router],
+  );
+
+  // Auto-forward post-signup: if the URL carries ?checkout=monthly|yearly and
+  // the user is now signed in, immediately kick off Stripe checkout for that
+  // plan. This removes the "sign up → bounce back to /pricing → click again"
+  // step that was dropping conversions.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    if (autoCheckoutFired.current) return;
+    const checkout = searchParams.get("checkout");
+    if (checkout !== "monthly" && checkout !== "yearly") return;
+    autoCheckoutFired.current = true;
+    const priceId = checkout === "yearly" ? yearlyPriceId : monthlyPriceId;
+    handleCheckout(priceId, checkout);
+  }, [isLoaded, isSignedIn, searchParams, yearlyPriceId, monthlyPriceId, handleCheckout]);
 
   return (
     <main
