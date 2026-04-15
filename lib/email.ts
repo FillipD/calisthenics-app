@@ -50,6 +50,7 @@ function buildEmailHtml(result: AssessmentResult): string {
   const { level, summary, plan } = result;
 
   const dayRows = plan.days.map(buildDayBlock).join("");
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://caliplan.com";
 
   return /* html */ `
 <!DOCTYPE html>
@@ -97,6 +98,28 @@ function buildEmailHtml(result: AssessmentResult): string {
             <td style="background-color:${COLORS.card};border:1px solid ${COLORS.border};border-left:3px solid ${COLORS.muscle};border-radius:8px;padding:20px;margin-top:8px;">
               <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${COLORS.muscle};">Coaching note</p>
               <p style="margin:0;font-size:14px;line-height:1.6;color:${COLORS.chalk};">${plan.note}</p>
+            </td>
+          </tr>
+
+          <tr><td style="height:32px;"></td></tr>
+
+          <!-- What happens after week 1 — soft Pro promo -->
+          <tr>
+            <td style="background-color:${COLORS.card};border:1px solid ${COLORS.border};border-radius:8px;padding:22px 20px;">
+              <p style="margin:0 0 10px;font-size:15px;font-weight:600;color:${COLORS.chalk};">What happens after week 1?</p>
+              <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:${COLORS.chalk};">
+                This is a one-week snapshot. <strong style="color:${COLORS.chalk};">CaliPlan Pro</strong> rebuilds your plan every week based on what you actually logged — harder progressions where you're ready, more volume where you need it. Plus the full skill tree toward goals like the muscle-up, handstand, and front lever.
+              </p>
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:${COLORS.muscle};border-radius:6px;">
+                    <a href="${appUrl}/pricing" style="display:inline-block;padding:10px 18px;font-size:14px;font-weight:700;color:#0f0f0e;text-decoration:none;letter-spacing:-0.01em;">See Pro →</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:14px 0 0;font-size:13px;line-height:1.5;color:${COLORS.muted};font-style:italic;">
+                Or just try the free week first — I'll check in with you in a few days to see how it's going.
+              </p>
             </td>
           </tr>
 
