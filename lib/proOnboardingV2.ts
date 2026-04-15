@@ -112,10 +112,14 @@ export const SCHEDULE_QUESTIONS: BenchmarkQuestion[] = [
 
 // ─── Stage 1b — Global benchmark questions ───────────────────────────────────
 // 9 questions covering the whole tree. Everyone answers all of these.
-// Ordered: strength reps first (easy, confidence-building) → skill checkpoints.
+// Split into two sub-steps so no single page dumps >5 questions on the user:
+//   - STRENGTH_BENCHMARK_QUESTIONS: 5 rep-count questions (pull, push, dips,
+//     pike push-ups, hanging leg raises). Fast, confidence-building.
+//   - SKILL_BENCHMARK_QUESTIONS: 4 skill checkpoints (yes/no + L-sit select).
+// BENCHMARK_QUESTIONS remains exported as the concatenation for any consumer
+// that wants the full list.
 
-export const BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
-  // ── Pull ────────────────────────────────────────────────────────────────────
+export const STRENGTH_BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
   {
     id:        'pullUpsMax',
     label:     'How many pull-ups can you do in one set?',
@@ -124,8 +128,6 @@ export const BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
     min:       0,
     helpText:  'Full dead hang to chin over bar — enter 0 if you cannot do one yet',
   },
-
-  // ── Push ────────────────────────────────────────────────────────────────────
   {
     id:        'pushUpsMax',
     label:     'How many push-ups can you do in one set?',
@@ -150,8 +152,17 @@ export const BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
     min:       0,
     helpText:  'Hips high, head between arms, nose toward floor — enter 0 if not possible yet',
   },
+  {
+    id:        'hangingLegRaisesMax',
+    label:     'How many hanging leg raises can you do?',
+    inputType: 'number',
+    unit:      'reps',
+    min:       0,
+    helpText:  'Straight legs raised to at least horizontal, from a dead hang. Enter 0 if you can only do knee raises or not yet.',
+  },
+]
 
-  // ── Skill checkpoints ───────────────────────────────────────────────────────
+export const SKILL_BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
   {
     id:        'canSkinTheCat',
     label:     'Can you complete a skin-the-cat?',
@@ -171,14 +182,6 @@ export const BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
     helpText:  'Any variation counts — assisted with a support is fine',
   },
   {
-    id:        'hangingLegRaisesMax',
-    label:     'How many hanging leg raises can you do?',
-    inputType: 'number',
-    unit:      'reps',
-    min:       0,
-    helpText:  'Straight legs raised to at least horizontal, from a dead hang. Enter 0 if you can only do knee raises or not yet.',
-  },
-  {
     id:        'lSitLevel',
     label:     'What best describes your L-sit?',
     inputType: 'select',
@@ -190,6 +193,11 @@ export const BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
       { value: '30s',   label: '30 seconds or more' },
     ] satisfies { value: LSitLevel; label: string }[],
   },
+]
+
+export const BENCHMARK_QUESTIONS: BenchmarkQuestion[] = [
+  ...STRENGTH_BENCHMARK_QUESTIONS,
+  ...SKILL_BENCHMARK_QUESTIONS,
 ]
 
 // ─── Stage 2 — Goal refinement questions ─────────────────────────────────────
@@ -359,9 +367,9 @@ export function getGoalRefinementQuestions(goals: ProGoalId[]): RefinementQuesti
   return result
 }
 
-/** Total step count for the v2 form: goals + schedule + benchmarks + refinement (if any). */
+/** Total step count for the v2 form: goals + schedule + strength + skills + refinement (if any). */
 export function getV2StepCount(goals: ProGoalId[]): number {
-  return 3 + (getGoalRefinementQuestions(goals).length > 0 ? 1 : 0)
+  return 4 + (getGoalRefinementQuestions(goals).length > 0 ? 1 : 0)
 }
 
 // ─── Category constraint helpers ──────────────────────────────────────────────

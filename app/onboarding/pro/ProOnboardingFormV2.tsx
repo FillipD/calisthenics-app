@@ -6,8 +6,9 @@
 // Steps:
 //   0 — Goals      (GoalSelectionV2: 1 primary + constrained secondaries)
 //   1 — Schedule   (equipment, trainingDays, sessionLength, emphasis)
-//   2 — Benchmarks (9 global questions: reps, yes/no, milestone selects)
-//   3 — Refinement (1–2 questions per selected goal; skipped if none needed)
+//   2 — Strength   (5 rep-count questions: pull/push/dips/pike/leg raises)
+//   3 — Skills     (4 skill checkpoints: skin-the-cat, handstand, pistol, L-sit)
+//   4 — Refinement (1–2 questions per selected goal; skipped if none needed)
 //
 // Writes { version: 2, data: ProOnboardingDataV2 } to sessionStorage[PRO_ONBOARDING_KEY].
 // The review page reads the version flag and calls assessProUserV2() accordingly.
@@ -33,7 +34,8 @@ import type {
 import { PRO_ONBOARDING_KEY } from "@/lib/proOnboarding";
 import {
   SCHEDULE_QUESTIONS,
-  BENCHMARK_QUESTIONS,
+  STRENGTH_BENCHMARK_QUESTIONS,
+  SKILL_BENCHMARK_QUESTIONS,
   getGoalRefinementQuestions,
   type BenchmarkQuestion,
   type RefinementQuestion,
@@ -109,13 +111,15 @@ function validate(
     if (v.pushUpsMax    === "" || v.pushUpsMax    === undefined) return "Enter your push-up max.";
     if (v.dipsMax       === "" || v.dipsMax       === undefined) return "Enter your dips max — use 0 if not yet.";
     if (v.pikePushUpsMax === "" || v.pikePushUpsMax === undefined) return "Enter your pike push-up max — use 0 if not yet.";
+    if (v.hangingLegRaisesMax === "" || v.hangingLegRaisesMax === undefined) return "Enter your hanging leg raise max — use 0 if not yet.";
+  }
+  if (step === 3) {
     if (v.canSkinTheCat   === undefined) return "Answer the skin-the-cat question.";
     if (v.wallHandstandAny === undefined) return "Answer the wall handstand question.";
     if (v.pistolSquatAny   === undefined) return "Answer the pistol squat question.";
-    if (v.hangingLegRaisesMax === "" || v.hangingLegRaisesMax === undefined) return "Enter your hanging leg raise max — use 0 if not yet.";
     if (!v.lSitLevel) return "Choose your L-sit level.";
   }
-  if (step === 3) {
+  if (step === 4) {
     for (const q of refinementQs) {
       if (q.inputType === "select" && !v[q.id]) {
         return `Please answer: "${q.label}"`;
@@ -130,14 +134,16 @@ function validate(
 const STEP_TITLES = [
   "Choose your goals",
   "Schedule & preferences",
-  "Fitness benchmarks",
+  "Strength benchmarks",
+  "Skill checkpoints",
   "Skill level check",
 ];
 
 const STEP_DESCRIPTIONS = [
   "Pick the skill you most want to achieve. You can add supporting goals from other categories after.",
   "Tell us how often you train and how long your sessions are so we can build the right volume.",
-  "These 9 questions let us place you accurately on the skill tree — no stopwatch needed.",
+  "Five quick rep-count questions. Use 0 for any you can't do yet — honest answers give you a better plan.",
+  "Four quick skill checks to place you on the tree. Don't worry if the answer is no.",
   "", // filled dynamically
 ];
 
@@ -175,7 +181,7 @@ export default function ProOnboardingFormV2({ resetMode }: { resetMode?: boolean
   const allGoals       = primaryGoal ? [primaryGoal, ...secondaryGoals] : [];
 
   const refinementQs = getGoalRefinementQuestions(allGoals);
-  const totalSteps   = refinementQs.length > 0 ? 4 : 3;
+  const totalSteps   = refinementQs.length > 0 ? 5 : 4;
   const isLastStep   = step === totalSteps - 1;
 
   // ── State helpers ────────────────────────────────────────────────────────────
@@ -377,9 +383,12 @@ export default function ProOnboardingFormV2({ resetMode }: { resetMode?: boolean
       return <>{SCHEDULE_QUESTIONS.map(renderQ)}</>;
     }
     if (step === 2) {
-      return <>{BENCHMARK_QUESTIONS.map(renderQ)}</>;
+      return <>{STRENGTH_BENCHMARK_QUESTIONS.map(renderQ)}</>;
     }
     if (step === 3) {
+      return <>{SKILL_BENCHMARK_QUESTIONS.map(renderQ)}</>;
+    }
+    if (step === 4) {
       return <>{refinementQs.map(q => renderQ(q as unknown as BenchmarkQuestion))}</>;
     }
     return null;
@@ -390,7 +399,7 @@ export default function ProOnboardingFormV2({ resetMode }: { resetMode?: boolean
   const progressPct = Math.round(((step + 1) / totalSteps) * 100);
 
   // Dynamic description for the refinement step
-  const stepDescription = step === 3
+  const stepDescription = step === 4
     ? `${refinementQs.length} quick question${refinementQs.length !== 1 ? "s" : ""} to fine-tune your starting position for ${allGoals.length > 1 ? "your selected goals" : "your goal"}.`
     : STEP_DESCRIPTIONS[step];
 
