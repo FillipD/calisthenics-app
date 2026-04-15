@@ -110,7 +110,7 @@ export default function Page() {
   }
 
   if (result) {
-    return <ResultView result={result} formData={{ pullUps: Number(pullUps), pushUps: Number(pushUps), dips: Number(dips) }} onReset={() => setResult(null)} />;
+    return <ResultView result={result} goal={goal} formData={{ pullUps: Number(pullUps), pushUps: Number(pushUps), dips: Number(dips) }} onReset={() => setResult(null)} />;
   }
 
   const isDev = process.env.NODE_ENV === "development";
@@ -589,14 +589,20 @@ function SkillTreePreview({ data }: { data: PreviewTreeData }) {
 
 function ResultView({
   result,
+  goal,
   formData,
   onReset,
 }: {
   result: AssessmentResult;
+  goal: Goal;
   formData: { pullUps: number; pushUps: number; dips: number };
   onReset: () => void;
 }) {
   const pullTree = getPreviewTree("pull", formData.pullUps, formData.pushUps, formData.dips);
+  // Pass level + goal as query params so /pricing can render a personalised
+  // hero even for users who haven't signed up yet (which is most traffic
+  // coming off the free assessment flow).
+  const pricingHref = `/pricing?level=${encodeURIComponent(result.level)}&goal=${encodeURIComponent(goal)}`;
 
   return (
     <main
@@ -1098,7 +1104,7 @@ function ResultView({
             Pro generates a new plan every week based on what you log. Your workouts get smarter as you progress.
           </p>
           <a
-            href="/pricing"
+            href={pricingHref}
             style={{
               display: "block",
               background: S.muscle,

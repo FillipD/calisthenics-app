@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
+import type { Goal, Level } from "@/types";
 
 const S = {
   bg:          "#0f0f0e",
@@ -25,12 +26,57 @@ const FEATURES = [
   "Cancel anytime",
 ];
 
+export interface UserContext {
+  firstName:       string | null;
+  level:           Level;
+  goal:            Goal;
+  daysSinceSignup: number;
+}
+
 interface Props {
   monthlyPriceId: string;
   yearlyPriceId:  string;
+  userContext?:   UserContext | null;
 }
 
-export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
+const GOAL_LABELS: Record<Goal, string> = {
+  "build-strength":        "build strength",
+  "build-muscle":          "build muscle",
+  "build-strength-muscle": "build strength and muscle",
+};
+
+function personalisedHero(ctx: UserContext) {
+  const goalLabel = GOAL_LABELS[ctx.goal] ?? ctx.goal.replace(/-/g, " ");
+  const nameBit = ctx.firstName ? `, ${ctx.firstName}` : "";
+
+  // Day-based framing — week 1 = the free plan they already received.
+  if (ctx.daysSinceSignup >= 7) {
+    return {
+      statusLine: `Your free week is done${nameBit}`,
+      headlineLead: "What happens",
+      headlineAccent: "next.",
+      subhead: `Your week-1 ${ctx.level} plan got you started. Pro rebuilds your plan every week based on what you actually logged — so the progressions keep matching where you really are as you ${goalLabel}.`,
+    };
+  }
+
+  if (ctx.daysSinceSignup >= 3) {
+    return {
+      statusLine: `A few days in${nameBit} — ready for week 2?`,
+      headlineLead: "Keep the",
+      headlineAccent: "momentum.",
+      subhead: `Your ${ctx.level} plan was built for day 0. Pro rebuilds it every week based on what you actually logged, with progressions tuned to where you are now as you ${goalLabel}.`,
+    };
+  }
+
+  return {
+    statusLine: "Join 200+ calisthenics athletes training with CaliPlan",
+    headlineLead: "Your plan is",
+    headlineAccent: "ready to evolve.",
+    subhead: `Week 1 was built for your ${ctx.level} starting point. Pro rebuilds your plan every week based on what you actually logged — so the work keeps matching your level as you ${goalLabel}.`,
+  };
+}
+
+export default function PricingCards({ monthlyPriceId, yearlyPriceId, userContext }: Props) {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -102,49 +148,131 @@ export default function PricingCards({ monthlyPriceId, yearlyPriceId }: Props) {
     >
       <div style={{ width: "100%", maxWidth: "480px" }}>
 
-        {/* ── Header + social proof counter ─────────────────────────────── */}
+        {/* ── Header — personalised for signed-in free users ──────────── */}
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <p
-            style={{
-              margin: "0 0 1.25rem",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              color: S.muscle,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.4rem",
-            }}
-          >
-            <span
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: S.muscle,
-                display: "inline-block",
-              }}
-            />
-            Join 200+ calisthenics athletes training with CaliPlan
-          </p>
-          <h1
-            className="font-display"
-            style={{
-              margin: "0 0 0.6rem",
-              fontSize: "clamp(2rem, 7vw, 2.75rem)",
-              fontWeight: 800,
-              color: S.white,
-              letterSpacing: "-0.03em",
-              lineHeight: 1.05,
-            }}
-          >
-            Train smarter,
-            <br />
-            <span style={{ color: S.muscle }}>every week.</span>
-          </h1>
-          <p style={{ margin: 0, fontSize: "0.95rem", color: S.muted, lineHeight: 1.65 }}>
-            CaliPlan Pro adapts your training as you progress — no guesswork, no plateaus.
-          </p>
+          {userContext ? (
+            <>
+              <p
+                style={{
+                  margin: "0 0 1rem",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  color: S.muscle,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.4rem",
+                }}
+              >
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: S.muscle, display: "inline-block" }} />
+                {personalisedHero(userContext).statusLine}
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.4rem",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  marginBottom: "1rem",
+                }}
+              >
+                <span
+                  style={{
+                    background: "rgba(200,240,74,0.12)",
+                    border: "1px solid rgba(200,240,74,0.3)",
+                    color: S.muscle,
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    padding: "0.28rem 0.65rem",
+                    borderRadius: "100px",
+                  }}
+                >
+                  {userContext.level}
+                </span>
+                <span
+                  style={{
+                    background: S.surfaceHigh,
+                    border: `1px solid ${S.border}`,
+                    color: S.mutedLight,
+                    fontSize: "0.68rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    padding: "0.28rem 0.65rem",
+                    borderRadius: "100px",
+                  }}
+                >
+                  Goal · {GOAL_LABELS[userContext.goal] ?? userContext.goal.replace(/-/g, " ")}
+                </span>
+              </div>
+
+              <h1
+                className="font-display"
+                style={{
+                  margin: "0 0 0.6rem",
+                  fontSize: "clamp(2rem, 7vw, 2.75rem)",
+                  fontWeight: 800,
+                  color: S.white,
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1.05,
+                }}
+              >
+                {personalisedHero(userContext).headlineLead}
+                <br />
+                <span style={{ color: S.muscle }}>{personalisedHero(userContext).headlineAccent}</span>
+              </h1>
+              <p style={{ margin: 0, fontSize: "0.95rem", color: S.muted, lineHeight: 1.65 }}>
+                {personalisedHero(userContext).subhead}
+              </p>
+            </>
+          ) : (
+            <>
+              <p
+                style={{
+                  margin: "0 0 1.25rem",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  color: S.muscle,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.4rem",
+                }}
+              >
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: S.muscle,
+                    display: "inline-block",
+                  }}
+                />
+                Join 200+ calisthenics athletes training with CaliPlan
+              </p>
+              <h1
+                className="font-display"
+                style={{
+                  margin: "0 0 0.6rem",
+                  fontSize: "clamp(2rem, 7vw, 2.75rem)",
+                  fontWeight: 800,
+                  color: S.white,
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1.05,
+                }}
+              >
+                Train smarter,
+                <br />
+                <span style={{ color: S.muscle }}>every week.</span>
+              </h1>
+              <p style={{ margin: 0, fontSize: "0.95rem", color: S.muted, lineHeight: 1.65 }}>
+                CaliPlan Pro adapts your training as you progress — no guesswork, no plateaus.
+              </p>
+            </>
+          )}
         </div>
 
         {/* ── Value props ──────────────────────────────────────────────── */}
